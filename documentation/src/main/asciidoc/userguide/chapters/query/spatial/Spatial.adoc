@@ -21,7 +21,7 @@ on the other hand implement the SQL/MM - Part 3: Spatial Data specification - a 
 SFS is limited to 2D geometries in the projected plane (although JTS supports 3D coordinates), whereas
 SQL/MM supports 2-, 3- or 4-dimensional coordinate spaces.
 
-Hibernate Spatial supports two different geometry models: http://tsusiatsoftware.net/jts/main.html[JTS] and
+Hibernate Spatial supports two different geometry models: http://docs.geotools.org/latest/userguide/library/jts/index.html[JTS] and
 https://github.com/GeoLatte/geolatte-geom[geolatte-geom]. As already mentioned, JTS is the _de facto_
 standard. Geolatte-geom (also written by the lead developer of Hibernate Spatial) is a more recent library that
 supports many features specified in SQL/MM but not available in JTS (such as support for 4D geometries, and support for extended WKT/WKB formats).
@@ -43,7 +43,7 @@ Hibernate Spatial requires some configuration prior to start using it.
 [[spatial-configuration-dependency]]
 ==== Dependency
 
-You need to include the `hibernate-spatial` dependency in your build environment.
+You need to include the `hibernate-spatial` dependency in your build environment. Further you need the dependecies for GeoLatte.
 For Maven, you need to add the following dependency:
 
 [[spatial-configuration-maven-example]]
@@ -56,6 +56,11 @@ For Maven, you need to add the following dependency:
     <artifactId>hibernate-spatial</artifactId>
     <version>${hibernate.version}</version>
 </dependency>
+<dependency>
+    <groupId>org.geolatte</groupId>
+    <artifactId>geolatte-geom</artifactId>
+    <version>${geolatte.version}</version>
+</dependency>
 ----
 ====
 
@@ -63,7 +68,7 @@ For Maven, you need to add the following dependency:
 ==== Dialects
 
 Hibernate Spatial extends the Hibernate ORM dialects so that the spatial functions of the database are made available within HQL and JPQL.
-So, for instance, instead of using the `PostgreSQL82Dialect`, we use the Hibernate Spatial extension of that dialect which is the `PostgisDialect`.
+So, we can use the `PostgisDialect` but we should use the dialect which matches our database the best.
 
 [[spatial-configuration-dialect-example]]
 .Specifying a spatial dialect
@@ -195,6 +200,38 @@ The `GeoDBDialect` supports the GeoDB a spatial extension of the H2 in-memory da
 ====
 The dialect has been tested with GeoDB version 0.7
 ====
+
+[[spatial-configuration-wildfly]]
+=== WildFly
+
+There seems to be classpath problems in a J2EE container where the JDBC drivers live in a different classpath than the Postgis JDBC extensions and/or Hibernate Spatial.
+
+So to get them fixed you need to copy the jars from Hibernate Spatial, JTS and GeoLatte to `JBOSS_PATH/modules/system/layers/base/org/hibernate/main`.
+Than you need to add them to the `module.xml`, so in the `resource` tag add the following
+====
+[source,xml]
+----
+<resource-root path="hibernate-spatial-x.x.x.jar"/>
+<resource-root path="jts-x.xx.jar"/>
+<resource-root path="geolatte-geom-x.x.x.jar"/>
+----
+====
+
+and in the `dependencies` tag, add:
+====
+[source,xml]
+----
+<module name="org.slf4j"/>
+----
+====
+If you are using postgresql, you need to add in the dependecies tag: 
+====
+[source,xml]
+----
+<module name="org.postgresql"/>
+----
+====
+
 
 [[spatial-types]]
 === Types
